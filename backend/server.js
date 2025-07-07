@@ -18,11 +18,23 @@ app.use('/api/books', bookRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('MongoDB connected');
-    app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
-    connectRabbit();
-  })
-  .catch((err) => console.error(err));
+const startServer = () => {
+  app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+};
+
+if (process.env.MONGO_URI) {
+  mongoose
+    .connect(process.env.MONGO_URI)
+    .then(() => {
+      console.log('MongoDB connected');
+      connectRabbit();
+      startServer();
+    })
+    .catch((err) => {
+      console.error('MongoDB connection failed', err);
+      startServer(); // continue to serve API endpoints that don't need DB
+    });
+} else {
+  console.warn('MONGO_URI not set — starting server without DB');
+  startServer();
+}
